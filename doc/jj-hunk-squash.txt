@@ -1,0 +1,112 @@
+*jj-hunk-squash.txt*  Git-style hunk staging for Jujutsu, in Neovim
+
+==============================================================================
+CONTENTS                                              *jj-hunk-squash-contents*
+
+  1. Introduction ............................... |jj-hunk-squash-intro|
+  2. Requirements ............................... |jj-hunk-squash-requirements|
+  3. Setup ...................................... |jj-hunk-squash-setup|
+  4. Commands ................................... |jj-hunk-squash-commands|
+  5. Lua API .................................... |jj-hunk-squash-api|
+  6. Events ..................................... |jj-hunk-squash-events|
+  7. Limitations ................................ |jj-hunk-squash-limitations|
+
+==============================================================================
+1. INTRODUCTION                                          *jj-hunk-squash-intro*
+
+jj-hunk-squash moves lines, hunks, or files from the working-copy revision
+`@` into another revision, typically the parent `@-`. It is similar to
+`git add --patch`, but for Jujutsu (jj).
+
+The plugin compares the file at `@-` with the current buffer. It then gives
+the selected changes to `jj squash --interactive` through a small script that
+acts as the diff editor.
+
+==============================================================================
+2. REQUIREMENTS                                   *jj-hunk-squash-requirements*
+
+- Neovim 0.10 or later.
+- jj 0.28 or later on `$PATH`, or set with the `jj_cmd` option.
+
+==============================================================================
+3. SETUP                                                 *jj-hunk-squash-setup*
+
+Call `setup()` to set the options and to create the user commands: >lua
+
+    require("jj-hunk-squash").setup({
+      jj_cmd = "jj",   -- path to the jj binary
+      notify = true,   -- show messages with vim.notify
+    })
+<
+==============================================================================
+4. COMMANDS                                           *jj-hunk-squash-commands*
+
+The revision argument is optional. The default is `@-`. Without a range, the
+commands use the cursor line.
+
+                                                                   *:JJSquash*
+:[range]JJSquash [rev]
+    Squash only the lines in [range] into [rev].
+
+                                                               *:JJSquashHunk*
+:[range]JJSquashHunk [rev]
+    Squash each complete hunk that [range] touches into [rev].
+
+                                                               *:JJSquashFile*
+:JJSquashFile [rev]
+    Squash all changes of the current file into [rev].
+
+==============================================================================
+5. LUA API                                                 *jj-hunk-squash-api*
+
+All functions take the same optional {opts} table:
+
+    to_rev            Any jj revset that resolves to one revision.
+                      Default: `"@-"`.
+    ignore_immutable  When true, squash into an immutable revision without
+                      a prompt. Default: false.
+    on_done           function(ok, err), called after the squash.
+
+In visual mode, the functions use the selection. In normal mode, they use
+the cursor line.
+
+                                        *jj-hunk-squash.squash_selection()*
+require("jj-hunk-squash").squash_selection({opts})
+    Squash only the selected lines.
+
+                                             *jj-hunk-squash.squash_hunk()*
+require("jj-hunk-squash").squash_hunk({opts})
+    Squash each complete hunk that the selection touches.
+
+                                             *jj-hunk-squash.squash_file()*
+require("jj-hunk-squash").squash_file({opts})
+    Squash all changes of the current file.
+
+Example mapping: >lua
+
+    vim.keymap.set({ "n", "x" }, "<leader>js", function()
+      require("jj-hunk-squash").squash_hunk({ to_rev = "@-" })
+    end, { desc = "jj: squash hunk into parent (@-)" })
+<
+==============================================================================
+6. EVENTS                                               *jj-hunk-squash-events*
+
+                                                          *JJHunkSquashDone*
+After each successful squash, the plugin runs |:checktime| on the buffer and
+fires the `User JJHunkSquashDone` autocommand. The event data is: >lua
+
+    { file = "path/relative/to/repo", to_rev = "@-", mode = "selection" }
+<
+`mode` is "selection", "hunk", or "file". Use this event to refresh a diff
+viewer. The README has examples for diffview.nvim and codediff.nvim.
+
+==============================================================================
+7. LIMITATIONS                                     *jj-hunk-squash-limitations*
+
+- The plugin does not follow renames. Use the current file path.
+- The plugin uses the buffer content, including unsaved changes.
+- When you select part of a replacement hunk, all old lines of the hunk are
+  removed, and only the selected new lines are inserted.
+- A pure deletion is selected when a line next to the deletion is selected.
+
+ vim:tw=78:ts=8:ft=help:norl:

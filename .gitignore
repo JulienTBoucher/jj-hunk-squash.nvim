@@ -1,0 +1,10 @@
+*.swp
+*.swo
+*~
+tags
+.luarc.json
+.luacheckrc
+lua_modules/
+.tests/
+doc/tags
+.claude/
