@@ -148,25 +148,12 @@ vim.api.nvim_create_autocmd("User", {
 
 ### codediff.nvim
 
-codediff.nvim does not currently expose a refresh command or autocmd. After a squash, the diff view shows stale content until manually re-opened.
-
-Workaround — re-trigger `:CodeDiff` after squash:
-
-```lua
-vim.api.nvim_create_autocmd("User", {
-  pattern = "JJHunkSquashDone",
-  callback = function(ev)
-    local pos = vim.api.nvim_win_get_cursor(0)
-    vim.cmd("CodeDiff file @-")   -- re-run with whatever revset you were viewing
-    pcall(vim.api.nvim_win_set_cursor, 0, pos)
-  end,
-})
-```
+No configuration is necessary. codediff.nvim watches the repository and refreshes its views after a squash, in approximately 100 ms. This was tested with codediff.nvim v4.0.6.
 
 Caveats:
-- Works well for single-file diff views; explorer view cursor is more fragile.
-- Cursor preservation is best-effort (clamps if file shrank above cursor).
-- A clean long-term fix would be an upstream `:CodeDiffRefresh` command.
+- codediff reads git revisions, not jj revsets. In a colocated repo, git `HEAD` is the jj parent `@-`. Use `:CodeDiff file HEAD`, not `:CodeDiff file @-`.
+- The explorer view (`:CodeDiff`) refreshes only when `explorer.auto_refresh` is `true` (the default). If you disable it, press `R` in the explorer after a squash.
+- Like diffview, codediff needs a colocated repo (`jj git init --colocate`). Pure-jj repos without `.git/` are not supported.
 
 ### What the plugin does *not* do
 

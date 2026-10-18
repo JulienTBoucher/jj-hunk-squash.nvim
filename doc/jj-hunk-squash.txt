@@ -98,7 +98,7 @@ fires the `User JJHunkSquashDone` autocommand. The event data is: >lua
     { file = "path/relative/to/repo", to_rev = "@-", mode = "selection" }
 <
 `mode` is "selection", "hunk", or "file". Use this event to refresh a diff
-viewer. The README has examples for diffview.nvim and codediff.nvim.
+viewer. The README explains how to use diffview.nvim and codediff.nvim.
 
 ==============================================================================
 7. LIMITATIONS                                     *jj-hunk-squash-limitations*
